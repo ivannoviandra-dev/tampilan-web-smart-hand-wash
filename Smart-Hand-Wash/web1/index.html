@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Smart Handwash — Dashboard</title>
+  <meta name="description" content="Dashboard monitoring Smart Handwash IoT — pantau level air, penggunaan pompa, dan sensor tangan secara real-time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=18">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Animated background blobs -->
+  <div class="bg-blobs" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <main class="shell">
+
+    <!-- ─── HEADER ─── -->
+    <header class="head" id="header">
+      <div class="brand">
+        <div class="mark">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v6"/>
+            <path d="M6.34 6.34l1.42 1.42"/>
+            <circle cx="12" cy="16" r="6"/>
+            <path d="M12 12v4l2 2"/>
+          </svg>
+        </div>
+        <div>
+          <div class="kicker">IoT Monitoring System</div>
+          <div class="title">Smart Handwash</div>
+          <div class="state">
+            <i class="dot" id="dot"></i>
+            <span id="status">Belum terhubung ke database</span>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="loginBtn" class="btn primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Masuk
+        </button>
+        <button id="logoutBtn" class="btn danger" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+        <button id="reconnectBtn" class="btn warning" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Reconnect
+        </button>
+        <button id="previewCsvBtn" class="btn secondary" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          Lihat CSV
+        </button>
+        <button id="csvBtn" class="btn secondary" disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Unduh CSV
+        </button>
+        <button id="resetCountBtn" class="btn secondary reset-count" disabled title="Mulai hitungan pemakaian dari nol">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+          Reset jumlah
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── CARDS GRID ─── -->
+    <div class="grid">
+
+      <!-- Water Level — Feature Card -->
+      <section class="card feature glass" id="cardWater">
+        <!-- Water wave animation background -->
+        <div class="water-wave-container" id="waveContainer">
+          <svg class="water-wave" viewBox="0 0 1200 200" preserveAspectRatio="none">
+            <path class="wave wave-back" d="M0,160 C300,100 600,200 1200,140 L1200,200 L0,200 Z"/>
+            <path class="wave wave-mid" d="M0,170 C200,130 500,190 800,150 C1000,130 1100,160 1200,150 L1200,200 L0,200 Z"/>
+            <path class="wave wave-front" d="M0,180 C150,160 400,195 650,170 C900,145 1050,180 1200,165 L1200,200 L0,200 Z"/>
+          </svg>
+        </div>
+        <div class="card-header">
+          <div class="card-icon water-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          </div>
+          <div class="label">Persediaan Air Galon</div>
+        </div>
+        <div class="num"><span id="percent">—</span><span class="unit">%</span></div>
+        <div class="note">Kapasitas terisi · jarak sensor <span id="distance">—</span> cm</div>
+        <div class="meter">
+          <div id="fill" class="fill"></div>
+        </div>
+        <div class="note" id="levelText">Menunggu perangkat mengirim data</div>
+        <div class="usage">
+          <div class="pump glass-inner">
+            <div class="pumphead">
+              <span class="pump-label">Pompa Sabun</span>
+              <span id="soapState" class="tag">OFF</span>
+            </div>
+            <div class="count" id="soapCount">0</div>
+            <div class="note">kali digunakan</div>
+          </div>
+          <div class="pump glass-inner">
+            <div class="pumphead">
+              <span class="pump-label">Pompa Air</span>
+              <span id="waterState" class="tag">OFF</span>
+            </div>
+            <div class="count" id="waterCount">0</div>
+            <div class="note">kali digunakan</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Volume Session -->
+      <section class="card glass" id="cardVolume">
+        <div class="card-header">
+          <div class="card-icon volume-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l4 10H4L8 2z"/><path d="M4 12a8 8 0 0 0 16 0"/><path d="M12 12v4"/></svg>
+          </div>
+          <div class="label">Volume Sesi Air</div>
+        </div>
+        <div class="num"><span id="volume">—</span><span class="unit"> mL</span></div>
+        <div class="note">Pompa mengikuti sensor tangan, tanpa target volume.</div>
+        <div class="note flow-status" id="flowStatus" aria-live="polite">Menunggu data sensor aliran</div>
+      </section>
+
+      <!-- Hand Sensor -->
+      <section class="card glass" id="cardSensor">
+        <div class="card-header">
+          <div class="card-icon sensor-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5"/><path d="M14 10V4a2 2 0 0 0-4 0v6"/><path d="M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 11a2 2 0 0 1 4 0v3a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+          </div>
+          <div class="label">Sensor Tangan</div>
+        </div>
+        <div class="sensor-row">
+          <span class="sensor-label">Sabun</span>
+          <span class="sensor-val" id="soapHand">—</span>
+        </div>
+        <div class="sensor-row">
+          <span class="sensor-label">Air</span>
+          <span class="sensor-val" id="waterHand">—</span>
+        </div>
+      </section>
+
+      <!-- Pump Activity -->
+      <section class="card glass" id="cardActivity">
+        <div class="card-header">
+          <div class="card-icon activity-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="label">Aktivitas Pompa</div>
+        </div>
+        <div class="num" id="totalCount">0</div>
+        <div class="note">total pemakaian tercatat</div>
+      </section>
+
+    </div>
+
+    <!-- ─── USAGE CHART ─── -->
+    <div class="section-label">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+      Statistik Penggunaan
+    </div>
+    <div class="chart-container glass">
+      <div class="chart-tabs">
+        <button class="chart-tab active" data-range="7">7 Hari</button>
+        <button class="chart-tab" data-range="14">14 Hari</button>
+        <button class="chart-tab" data-range="30">30 Hari</button>
+      </div>
+      <div class="usage-summary-wrap">
+        <table class="usage-summary-table">
+          <thead><tr><th>Pompa</th><th>Jumlah penggunaan</th><th>Total keluar</th><th>Dasar volume</th></tr></thead>
+          <tbody id="usageSummary"><tr><td colspan="4" class="note">Login untuk memuat ringkasan.</td></tr></tbody>
+        </table>
+      </div>
+      <canvas id="usageChart"></canvas>
+      <div class="note chart-note" id="chartNote">Login untuk melihat statistik penggunaan.</div>
+    </div>
+
+    <!-- ─── HISTORY TABLE ─── -->
+    <div class="section-label">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Riwayat Penggunaan Terbaru
+    </div>
+    <div class="tablewrap glass">
+      <table>
+        <thead>
+          <tr>
+            <th>Waktu perangkat</th>
+            <th>Pompa</th>
+            <th>Jumlah pakai</th>
+            <th>Volume keluar</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="events">
+          <tr><td colspan="5" class="note">Login untuk memuat data.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="small">Data diperbarui langsung dari Firebase Realtime Database. CSV berisi catatan penggunaan pompa untuk dibuka di Excel.</p>
+  </main>
+
+  <!-- ─── LOGIN DIALOG ─── -->
+  <div class="login-overlay" id="login">
+    <div class="loginbox glass-strong">
+      <div class="login-title">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Hubungkan Database
+      </div>
+      <p class="note">Masukkan konfigurasi Web Firebase dan akun dashboard.</p>
+      <label class="input-label">API Key</label>
+      <input id="apiKey" placeholder="AIza…">
+      <label class="input-label">Project ID</label>
+      <input id="projectId" placeholder="nama-project">
+      <label class="input-label">Database URL</label>
+      <input id="dbUrl" placeholder="https://nama-project-default-rtdb…">
+      <label class="input-label">Email Akun</label>
+      <input id="email" type="email" placeholder="user@email.com">
+      <label class="input-label">Password</label>
+      <input id="password" type="password" placeholder="••••••••">
+      <div class="actions">
+        <button id="doLogin" class="btn primary">Masuk & Hubungkan</button>
+        <button id="cancel" class="btn secondary">Batal</button>
+      </div>
+      <div id="error" class="error"></div>
+      <p class="small">Konfigurasi disimpan hanya di browser ini.</p>
+    </div>
+  </div>
+
+  <div class="csv-preview-overlay" id="csvPreview" style="display:none" role="dialog" aria-modal="true" aria-labelledby="csvPreviewTitle">
+    <section class="csv-preview-card glass-strong">
+      <div class="csv-preview-header">
+        <div>
+          <h2 id="csvPreviewTitle">Pratinjau CSV</h2>
+          <p class="note">Ringkasan pemakaian sejak reset dan riwayat lengkap.</p>
+        </div>
+        <button id="closeCsvPreviewBtn" class="btn secondary" type="button">Tutup</button>
+      </div>
+      <div class="csv-preview-tablewrap">
+        <table class="csv-preview-table" aria-label="Pratinjau isi CSV">
+          <tbody id="csvPreviewBody"></tbody>
+        </table>
+      </div>
+      <div class="csv-preview-mobile" id="csvPreviewMobile" aria-label="Pratinjau CSV untuk layar kecil"></div>
+      <div class="csv-preview-actions">
+        <button id="previewCsvDownloadBtn" class="btn primary" type="button">Unduh CSV</button>
+      </div>
+    </section>
+  </div>
+
+<script type="module" src="app.js?v=31"></script>
+</body>
+</html>
+
+
+
+
